@@ -19,14 +19,9 @@ columns = ['CRIM','ZN','INDUS',
          'TAX','PTRATIO','B',
          'LSTAT','MEDV']
 
-rawData = pd.read_csv('housing.data.txt',
+data = pd.read_csv('housing.data.txt',
                    delim_whitespace=True,
                    header = None, names = columns)
-
-
-scaler = StandardScaler().fit(rawData)
-data = pd.DataFrame(scaler.transform(rawData))
-data.columns = columns
                    
 # tách dữ liệu thành examples và labels tương ứng
 examples = np.array(data[['CRIM','ZN','INDUS',
@@ -34,16 +29,26 @@ examples = np.array(data[['CRIM','ZN','INDUS',
                 'AGE','DIS','RAD',
                 'TAX','PTRATIO','B',
                 'LSTAT']])
+
 labels = np.array(data[['MEDV']])
 
+# chuẩn hóa dữ liệu
+
+xScaler = StandardScaler().fit(examples)
+yScaler = StandardScaler().fit(labels)
+
+examplesStd = xScaler.transform(examples)
+labelsStd = yScaler.transform(labels)
+
 # chia dữ liệu thành tập train và tập test
-xTrain, xTest, yTrain, yTest = train_test_split(examples, labels, random_state = 42)
+xTrain, xTest, yTrain, yTest = train_test_split(examplesStd, labelsStd, random_state = 42)
 
 # xay dung model hoi quy tuyen tinh bang thu vien
 model = LinearRegression()
 model.fit(xTrain, yTrain)
 wmodel = np.concatenate((model.intercept_, model.coef_.flatten()))
 
+# hàm tính deltaE
 @jit
 def dE(yHat, y, x):
     m = x.shape[0]
@@ -55,21 +60,25 @@ def dE(yHat, y, x):
         deltaE[i] = 2/m*np.sum((yHat - y)*xi)
     return deltaE
 
+# hàm tính hàm giả thiết H
 @jit
 def h(x, w):
     return np.sum(x*w, axis = 1)
 
+# hàm tính độ lỗi
 @jit
 def Er(x, y, w):
     m = x.shape[0]
     yHat = h(x, w)
     return (1/m)*np.sum((y-yHat)**2)
 
+# hàm thêm cột 1 vào ma trận examples
 @jit
 def add1Col(x):
      m = x.shape[0]
      return np.hstack((np.full((m, 1), 1), x))
-    
+
+# hàm chạy batch gradient descent
 @jit
 def BGD(x, y, learningRate, w = None, epsilon= 0.001):
     
@@ -101,6 +110,15 @@ def BGD(x, y, learningRate, w = None, epsilon= 0.001):
         w = wnext
     return w, E
 
+# hàm dự đoán từ mô hình đã học được, có chuyển về scale dữ liệu ban đầu
+@jit
+def linearRegressionPredict(x, w, scaler=None):
+    x = add1Col(x)
+    yPred = np.sum(x*w, axis = 1)
+    if scaler == None:
+        return yPred
+    else:
+        return scaler.inverse_transform(yPred)
 
 
 # tìm bộ trọng số và độ lỗi dựa trên tập train, pp BGD
@@ -119,5 +137,7 @@ EmodelTrain = Er(xTr, yTr, wmodel)
 # tìm độ lỗi của wmodel trên tập test
 EmodelTest = Er(xTe, yTe, wmodel)
 
+# dự đoán giá nhà theo examples trong tập test, có scale về khoảng giá ban đầu
+yPred = linearRegressionPredict(xTest, w, yScaler)
 
 
