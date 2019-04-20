@@ -8,7 +8,7 @@ Created on Fri Apr 19 08:47:44 2019
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from numba import jit
 
@@ -23,7 +23,9 @@ rawData = pd.read_csv('housing.data.txt',
                    delim_whitespace=True,
                    header = None, names = columns)
 
-data = pd.DataFrame(normalize(rawData))
+
+scaler = StandardScaler().fit(rawData)
+data = pd.DataFrame(scaler.transform(rawData))
 data.columns = columns
                    
 # tách dữ liệu thành examples và labels tương ứng
