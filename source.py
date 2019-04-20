@@ -27,41 +27,44 @@ data = pd.DataFrame(normalize(rawData))
 data.columns = columns
                    
 # tách dữ liệu thành examples và labels tương ứng
-examples = data[['CRIM','ZN','INDUS',
+examples = np.array(data[['CRIM','ZN','INDUS',
                 'CHAS','NOX','RM',
                 'AGE','DIS','RAD',
                 'TAX','PTRATIO','B',
-                'LSTAT']]
-labels = data[['MEDV']]
+                'LSTAT']])
+labels = np.array(data[['MEDV']])
 
 # chia dữ liệu thành tập train và tập test
 xTrain, xTest, yTrain, yTest = train_test_split(examples, labels, random_state = 42)
 
-#
+# xay dung model hoi quy tuyen tinh bang thu vien
 model = LinearRegression()
 model.fit(xTrain, yTrain)
+wmodel = np.concatenate((model.intercept_, model.coef_.flatten()))
+
 @jit
 def dE(yHat, y, x):
     m = x.shape[0]
-    deltaE = np.full((x.shape[1]), 0, dtype='float')
+    deltaE = np.full((x.shape[1]), 0.0, dtype='float')
     
     for i in range(x.shape[1]):
         xi = x[:,i]
         
         deltaE[i] = 2/m*np.sum((yHat - y)*xi)
     return deltaE
+
 @jit
 def h(x, w):
     return np.sum(x*w, axis = 1)
 
+@jit
 def Er(x, y, w):
-    x = np.array(x)
-    y = np.array(y)
     m = x.shape[0]
     yHat = h(x, w)
     return (1/m)*np.sum((y-yHat)**2)
- 
-def xP(x):
+
+@jit
+def add1Col(x):
      m = x.shape[0]
      return np.hstack((np.full((m, 1), 1), x))
     
@@ -71,7 +74,7 @@ def BGD(x, y, learningRate, w = None, epsilon= 0.001):
     if w == None:
         w = np.zeros((x.shape[1]+1))
         
-    x = xP(x)
+    x = add1Col(x)
     
     y = np.array(y).flatten()
     
@@ -96,12 +99,23 @@ def BGD(x, y, learningRate, w = None, epsilon= 0.001):
         w = wnext
     return w, E
 
-x = xP(xTest)
-y = np.array(yTest).flatten()
-wmodel = np.concatenate((model.intercept_, model.coef_.flatten()))
 
-w, E = BGD(xTrain, yTrain, learningRate=0.075, epsilon = 0.000000000001)
 
-Emodel = Er(x, y, wmodel)
-Emy = Er(x, y, w)
-E-Emodel
+# tìm bộ trọng số và độ lỗi dựa trên tập train, pp BGD
+w, ETrain = BGD(xTrain, yTrain, learningRate=0.05, epsilon = 0.00000000001)
+
+xTe = add1Col(xTest)
+yTe = yTest.flatten()
+
+xTr = add1Col(xTrain)
+yTr = yTrain.flatten()
+
+# tìm độ lỗi dựa của w trên tập test
+ETest = Er(xTe, yTe, w)
+# tìm độ lỗi của wmodel từ tập train
+EmodelTrain = Er(xTr, yTr, wmodel)
+# tìm độ lỗi của wmodel trên tập test
+EmodelTest = Er(xTe, yTe, wmodel)
+
+
+
