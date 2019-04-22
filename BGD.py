@@ -58,6 +58,7 @@ wmodel = np.concatenate((model.intercept_, model.coef_.flatten()))
 yPredModel = model.predict(xTest)
 ETestModel = mean_squared_error(yScaler.inverse_transform(yPredModel), yScaler.inverse_transform(yTest))
 ETrainModel = mean_squared_error(yScaler.inverse_transform(model.predict(xTrain)), yScaler.inverse_transform(yTrain)) 
+
 '''
     XÂY DỰNG MODEL BẰNG CÁC HÀM TỰ CODE
 '''
@@ -142,17 +143,26 @@ yTe = yTest.flatten()
 xTr = add1Col(xTrain)
 yTr = yTrain.flatten()
 
-# tìm độ lỗi dựa của w trên tập test
-#ETest = Er(xTe, yTe, w, yScaler)
-
 # dự đoán giá nhà theo examples trong tập test, có scale về khoảng giá ban đầu
 yPred = linearRegressionPredict(xTest, w, yScaler)
+
+# tìm độ lỗi với w tìm được trên tập test và tập train
 ETest = mean_squared_error(yScaler.inverse_transform(yTest), yPred)
 ETrain = mean_squared_error(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, w, yScaler))
 
-# tìm độ lỗi bình phương trung bình giữa y dự đoán từ model thư viện
-# và y dự đoán từ model tự xây dựng
-#EforModelsComparison = mean_squared_error(yPred, yScaler.inverse_transform(yPredModel))
+print("E test:", ETest)
+print("E train:", ETrain)
+
+plt.scatter(yScaler.inverse_transform(yTest), linearRegressionPredict(xTest, w, yScaler), s=1, c='blue', marker='o', label = 'Test set')
+plt.scatter(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, w, yScaler), s=1, c='red', marker='o', label = 'Training set')
+plt.legend()
+plt.ylabel('y_pred')
+plt.xlabel('y')
+plt.axis([0,50,0,50])
+plt.title('Batch Gradient Descent')
+plt.plot([0,50],[0,50],'g-')
+plt.savefig('BGD.png')
+plt.show()
 
 '''
     XÂY DỰNG MODEL BẰNG PP NORMAL EQUATION
@@ -177,4 +187,5 @@ plt.xlabel('y')
 plt.axis([0,50,0,50])
 plt.title('Normal Equations')
 plt.plot([0,50],[0,50],'g-')
+plt.savefig('NormEqua.png')
 plt.show()
