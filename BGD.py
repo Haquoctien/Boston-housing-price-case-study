@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
+from matplotlib import pyplot as plt
 
 '''
     TIỀN XỬ LÍ
@@ -55,8 +56,8 @@ model = LinearRegression()
 model.fit(xTrain, yTrain)
 wmodel = np.concatenate((model.intercept_, model.coef_.flatten()))
 yPredModel = model.predict(xTest)
-ETestModel = mean_squared_error(yTest, yPredModel)
-
+ETestModel = mean_squared_error(yScaler.inverse_transform(yPredModel), yScaler.inverse_transform(yTest))
+ETrainModel = mean_squared_error(yScaler.inverse_transform(model.predict(xTrain)), yScaler.inverse_transform(yTrain)) 
 '''
     XÂY DỰNG MODEL BẰNG CÁC HÀM TỰ CODE
 '''
@@ -120,7 +121,7 @@ def BGD(x, y, learningRate, w = None, epsilon= 0.001):
             break
         E = Enext
         w = wnext
-    return w, E
+    return w
 
 # hàm dự đoán từ mô hình đã học được, có chuyển về scale dữ liệu ban đầu
 @jit
@@ -133,7 +134,7 @@ def linearRegressionPredict(x, w, scaler=None):
         return scaler.inverse_transform(yPred)
 
 # tìm bộ trọng số và độ lỗi dựa trên tập train, pp BGD
-w, ETrain = BGD(xTrain, yTrain, learningRate=0.05, epsilon = 0.00000000001)
+w = BGD(xTrain, yTrain, learningRate=0.05, epsilon = 0.0000000000000001)
 
 xTe = add1Col(xTest)
 yTe = yTest.flatten()
@@ -142,7 +143,38 @@ xTr = add1Col(xTrain)
 yTr = yTrain.flatten()
 
 # tìm độ lỗi dựa của w trên tập test
-ETest = Er(xTe, yTe, w)
+#ETest = Er(xTe, yTe, w, yScaler)
 
 # dự đoán giá nhà theo examples trong tập test, có scale về khoảng giá ban đầu
 yPred = linearRegressionPredict(xTest, w, yScaler)
+ETest = mean_squared_error(yScaler.inverse_transform(yTest), yPred)
+ETrain = mean_squared_error(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, w, yScaler))
+
+# tìm độ lỗi bình phương trung bình giữa y dự đoán từ model thư viện
+# và y dự đoán từ model tự xây dựng
+#EforModelsComparison = mean_squared_error(yPred, yScaler.inverse_transform(yPredModel))
+
+'''
+    XÂY DỰNG MODEL BẰNG PP NORMAL EQUATION
+'''
+# normal equations
+def NormalEquations(xTrain, yTrain):      
+    w = np.linalg.inv((xTrain.transpose().dot(xTrain))).dot(xTrain.transpose().dot(yTrain))    
+    return w
+    
+wNormal = NormalEquations(xTr, yTr)
+ETestNormal = mean_squared_error(yScaler.inverse_transform(yTest), linearRegressionPredict(xTest, w, yScaler))
+ETrainNormal = mean_squared_error(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, w, yScaler))
+print("E test:", ETestNormal)
+print("E train:", ETrainNormal)
+
+
+plt.scatter(yScaler.inverse_transform(yTest), linearRegressionPredict(xTest, wNormal, yScaler), s=1, c='blue', marker='o', label = 'Test set')
+plt.scatter(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, wNormal, yScaler), s=1, c='red', marker='o', label = 'Training set')
+plt.legend()
+plt.ylabel('y_pred')
+plt.xlabel('y')
+plt.axis([0,50,0,50])
+plt.title('Normal Equations')
+plt.plot([0,50],[0,50],'g-')
+plt.show()
