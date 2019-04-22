@@ -137,12 +137,6 @@ def linearRegressionPredict(x, w, scaler=None):
 # tìm bộ trọng số và độ lỗi dựa trên tập train, pp BGD
 w = BGD(xTrain, yTrain, learningRate=0.05, epsilon = 0.0000000000000001)
 
-xTe = add1Col(xTest)
-yTe = yTest.flatten()
-
-xTr = add1Col(xTrain)
-yTr = yTrain.flatten()
-
 # dự đoán giá nhà theo examples trong tập test, có scale về khoảng giá ban đầu
 yPred = linearRegressionPredict(xTest, w, yScaler)
 
