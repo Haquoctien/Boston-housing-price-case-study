@@ -48,9 +48,9 @@ xTrain, xTest, yTrain, yTest = train_test_split(examplesStd, labelsStd, random_s
 model = LinearRegression()
 model.fit(xTrain, yTrain)
 wLib = np.concatenate((model.intercept_, model.coef_.flatten()))
-yPredModel = model.predict(xTest)
-ETestModel = mean_squared_error(yScaler.inverse_transform(yPredModel), yScaler.inverse_transform(yTest))
-ETrainModel = mean_squared_error(yScaler.inverse_transform(model.predict(xTrain)), yScaler.inverse_transform(yTrain)) 
+yPredLib = model.predict(xTest)
+ETestLib = mean_squared_error(yScaler.inverse_transform(yPredLib), yScaler.inverse_transform(yTest))
+ETrainLib = mean_squared_error(yScaler.inverse_transform(model.predict(xTrain)), yScaler.inverse_transform(yTrain)) 
 
 # hàm dự đoán từ mô hình đã học được, có chuyển về scale dữ liệu ban đầu
 @jit
@@ -79,7 +79,7 @@ def plot(xTrain, yTrain, xTest, yTest, w, scaler, y_max, title, outputName, xlab
     BGD
 '''
 from BGD import BGD, add1Col
-# tìm bộ trọng số và độ lỗi dựa trên tập train, pp BGD
+# tìm bộ trọng số và độ lỗi dựa trên tập train
 wBGD = BGD(xTrain, yTrain, learningRate=0.05, epsilon = 1e-15)
 
 # dự đoán giá nhà theo examples trong tập test, có scale về khoảng giá ban đầu
@@ -89,6 +89,7 @@ yPredBGD = linearRegressionPredict(xTest, wBGD, yScaler)
 ETestBGD = mean_squared_error(yScaler.inverse_transform(yTest), yPredBGD)
 ETrainBGD = mean_squared_error(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, wBGD, yScaler))
 
+print("Kết quả dự đoán giá nhà của 10 examples đầu trong tập test: ", yPredBGD[:10])
 print("E test:", ETestBGD)
 print("E train:", ETrainBGD)
 
@@ -98,7 +99,7 @@ plot(xTrain, yTrain, xTest, yTest, wBGD, yScaler, 50 ,'Batch Gradient Descent', 
     SGD
 '''
 from SGD import SGD
-
+# tìm bộ trọng số và độ lỗi dựa trên tập train
 wSGD = SGD(xTrain, yTrain, learningRate=0.00005, epsilon = 1e-15, numberOfIterations=1000)
 
 # dự đoán giá nhà theo examples trong tập test, có scale về khoảng giá ban đầu
@@ -108,6 +109,7 @@ yPredSGD = linearRegressionPredict(xTest, wSGD, yScaler)
 ETestSGD = mean_squared_error(yScaler.inverse_transform(yTest), yPredSGD)
 ETrainSGD = mean_squared_error(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, wSGD, yScaler))
 
+print("Kết quả dự đoán giá nhà của 10 examples đầu trong tập test: ", yPredSGD[:10])
 print("E test:", ETestSGD)
 print("E train:", ETrainSGD)
 plot(xTrain, yTrain, xTest, yTest, wSGD, yScaler, 50 ,'Stochastic Gradient Descent', 'SGD.png')
@@ -116,15 +118,17 @@ plot(xTrain, yTrain, xTest, yTest, wSGD, yScaler, 50 ,'Stochastic Gradient Desce
     MBGD
 '''
 from MBGD import MBGD
+# tìm bộ trọng số và độ lỗi dựa trên tập train
 wMBGD = MBGD(xTrain, yTrain, learningRate=0.005, epsilon = 1e-16)
 
 # dự đoán giá nhà theo examples trong tập test, có scale về khoảng giá ban đầu
-yPredMBGD = linearRegressionPredict(xTest, wSGD, yScaler)
+yPredMBGD = linearRegressionPredict(xTest, wMBGD, yScaler)
 
 # tìm độ lỗi với w tìm được trên tập test và tập train
-ETestMBGD = mean_squared_error(yScaler.inverse_transform(yTest), yPredSGD)
-ETrainMBGD = mean_squared_error(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, wSGD, yScaler))
+ETestMBGD = mean_squared_error(yScaler.inverse_transform(yTest), yPredMBGD)
+ETrainMBGD = mean_squared_error(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, wMBGD, yScaler))
 
+print("Kết quả dự đoán giá nhà của 10 examples đầu trong tập test: ", yPredMBGD[:10])
 print("E test:", ETestMBGD)
 print("E train:", ETrainMBGD)
 plot(xTrain, yTrain, xTest, yTest, wMBGD, yScaler, 50 ,'Minibatch Gradient Descent', 'MBGD.png')
@@ -132,15 +136,18 @@ plot(xTrain, yTrain, xTest, yTest, wMBGD, yScaler, 50 ,'Minibatch Gradient Desce
 '''
     XÂY DỰNG MODEL BẰNG PP NORMAL EQUATION
 '''
-def NormalEquation(x, y):
-    x = add1Col(x)
-    y = y.flatten()
-    w = np.linalg.inv((x.transpose().dot(x))).dot(x.transpose().dot(y))    
-    return w
-    
+from NE import NormalEquation
+# tìm bộ trọng số và độ lỗi dựa trên tập train
 wNormal = NormalEquation(xTrain, yTrain)
-ETestNormal = mean_squared_error(yScaler.inverse_transform(yTest), linearRegressionPredict(xTest, wNormal, yScaler))
+
+# dự đoán giá nhà theo examples trong tập test, có scale về khoảng giá ban đầu
+yPredNormal = linearRegressionPredict(xTest, wNormal, yScaler)
+
+# tìm độ lỗi với w tìm được trên tập test và tập train
+ETestNormal = mean_squared_error(yScaler.inverse_transform(yTest), yPredNormal)
 ETrainNormal = mean_squared_error(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, wNormal, yScaler))
+
+print("Kết quả dự đoán giá nhà của 10 examples đầu trong tập test: ", yPredNormal[:10])
 print("E test:", ETestNormal)
 print("E train:", ETrainNormal)
 
