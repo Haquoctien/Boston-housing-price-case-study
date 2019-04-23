@@ -135,7 +135,7 @@ def linearRegressionPredict(x, w, scaler=None):
         return scaler.inverse_transform(yPred)
 
 # tìm bộ trọng số và độ lỗi dựa trên tập train, pp BGD
-w = BGD(xTrain, yTrain, learningRate=0.05, epsilon = 0.0000000000000001)
+w = BGD(xTrain, yTrain, learningRate=0.05, epsilon = 1e-16)
 
 # dự đoán giá nhà theo examples trong tập test, có scale về khoảng giá ban đầu
 yPred = linearRegressionPredict(xTest, w, yScaler)
@@ -162,13 +162,15 @@ plt.show()
     XÂY DỰNG MODEL BẰNG PP NORMAL EQUATION
 '''
 # normal equations
-def NormalEquations(xTrain, yTrain):      
-    w = np.linalg.inv((xTrain.transpose().dot(xTrain))).dot(xTrain.transpose().dot(yTrain))    
+def NormalEquations(x, y):
+    x = add1Col(x)
+    y = y.flatten()
+    w = np.linalg.inv((x.transpose().dot(x))).dot(x.transpose().dot(y))    
     return w
     
-wNormal = NormalEquations(xTr, yTr)
-ETestNormal = mean_squared_error(yScaler.inverse_transform(yTest), linearRegressionPredict(xTest, w, yScaler))
-ETrainNormal = mean_squared_error(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, w, yScaler))
+wNormal = NormalEquations(xTrain, yTrain)
+ETestNormal = mean_squared_error(yScaler.inverse_transform(yTest), linearRegressionPredict(xTest, wNormal, yScaler))
+ETrainNormal = mean_squared_error(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, wNormal, yScaler))
 print("E test:", ETestNormal)
 print("E train:", ETrainNormal)
 
