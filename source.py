@@ -64,8 +64,8 @@ def linearRegressionPredict(x, w, scaler=None):
    
 # hàm vẽ biểu đồ thể hiện độ chính xác của mô hình tìm được trên tập train và tập test
 def plot(xTrain, yTrain, xTest, yTest, w, scaler, y_max, title, outputName, xlabel = 'y', ylabel = 'y_pred'):
-    plt.scatter(yScaler.inverse_transform(yTest), linearRegressionPredict(xTest, wSGD, yScaler), s=1, c='blue', marker='o', label = 'Test set')
-    plt.scatter(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, wSGD, yScaler), s=1, c='red', marker='o', label = 'Training set')
+    plt.scatter(yScaler.inverse_transform(yTest), linearRegressionPredict(xTest, w, yScaler), s=1, c='blue', marker='o', label = 'Test set')
+    plt.scatter(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, w, yScaler), s=1, c='red', marker='o', label = 'Training set')
     plt.legend()
     plt.ylabel(ylabel)
     plt.xlabel(xlabel)
@@ -78,9 +78,9 @@ def plot(xTrain, yTrain, xTest, yTest, w, scaler, y_max, title, outputName, xlab
 '''
     BGD
 '''
-from BGD import BGD
+from BGD import BGD, add1Col
 # tìm bộ trọng số và độ lỗi dựa trên tập train, pp BGD
-wBGD = BGD(xTrain, yTrain, learningRate=0.05, epsilon = 1e-16)
+wBGD = BGD(xTrain, yTrain, learningRate=0.05, epsilon = 1e-15)
 
 # dự đoán giá nhà theo examples trong tập test, có scale về khoảng giá ban đầu
 yPredBGD = linearRegressionPredict(xTest, wBGD, yScaler)
@@ -95,11 +95,11 @@ print("E train:", ETrainBGD)
 plot(xTrain, yTrain, xTest, yTest, wBGD, yScaler, 50 ,'Batch Gradient Descent', 'BGD.png')
 
 '''
-SGD
+    SGD
 '''
-from SGD import SGD, add1Col
+from SGD import SGD
 
-wSGD = SGD(xTrain, yTrain, learningRate=0.00005, epsilon = 1e-10, numberOfIterations=1000)
+wSGD = SGD(xTrain, yTrain, learningRate=0.00005, epsilon = 1e-15, numberOfIterations=1000)
 
 # dự đoán giá nhà theo examples trong tập test, có scale về khoảng giá ban đầu
 yPredSGD = linearRegressionPredict(xTest, wSGD, yScaler)
@@ -113,9 +113,25 @@ print("E train:", ETrainSGD)
 plot(xTrain, yTrain, xTest, yTest, wSGD, yScaler, 50 ,'Stochastic Gradient Descent', 'SGD.png')
 
 '''
+    MBGD
+'''
+from MBGD import MBGD
+wMBGD = MBGD(xTrain, yTrain, learningRate=0.005, epsilon = 1e-16)
+
+# dự đoán giá nhà theo examples trong tập test, có scale về khoảng giá ban đầu
+yPredMBGD = linearRegressionPredict(xTest, wSGD, yScaler)
+
+# tìm độ lỗi với w tìm được trên tập test và tập train
+ETestMBGD = mean_squared_error(yScaler.inverse_transform(yTest), yPredSGD)
+ETrainMBGD = mean_squared_error(yScaler.inverse_transform(yTrain), linearRegressionPredict(xTrain, wSGD, yScaler))
+
+print("E test:", ETestMBGD)
+print("E train:", ETrainMBGD)
+plot(xTrain, yTrain, xTest, yTest, wMBGD, yScaler, 50 ,'Minibatch Gradient Descent', 'MBGD.png')
+
+'''
     XÂY DỰNG MODEL BẰNG PP NORMAL EQUATION
 '''
-# norm
 def NormalEquation(x, y):
     x = add1Col(x)
     y = y.flatten()
