@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Apr 23 09:41:30 2019
-
-@author: tien
-"""
-
 import numpy as np
 from numba import jit
 '''
