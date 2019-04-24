@@ -4,6 +4,9 @@ Created on Tue Apr 23 20:30:38 2019
 
 @author: tien
 """
+'''
+    NE
+'''
 from BGD import add1Col
 import numpy as np
 
